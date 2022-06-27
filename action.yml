@@ -20,18 +20,23 @@ inputs:
     description: Exclude unsafe cops.
     required: false
     default: 'true'
+  gemfile_lock_path:
+    description: Lockfile to detect RuboCop related gems.
+    required: false
+    default: ""
 runs:
   using: composite
   steps:
     - uses: ruby/setup-ruby@v1
       with:
-        bundler-cache: true
+        bundler-cache: false # checkout済みのGemfileを参照してのbundle installは不要
         ruby-version: 3.1
-    - run: gem install --no-document rubocop_todo_corrector:0.7.1
+    - run: | # specfic_installが効かないため仕方なくこうする
+        gem install --no-document --both vendor/rubocop_todo_corrector/pkg/rubocop_todo_corrector-0.7.1.gem
       shell: bash
-    - uses: actions/checkout@v3
+    # - uses: actions/checkout@v3 参照元でcheckout済みなのでここでは不要
     - name: rubocop_todo_corrector bundle
-      run: rubocop_todo_corrector bundle
+      run: rubocop_todo_corrector bundle ${{ inputs.gemfile_lock_path != '' && format('--gemfile-lock-path={0}', inputs.gemfile_lock_path) || '' }}
       shell: bash
     - name: rubocop_todo_corrector pick
       id: pick
